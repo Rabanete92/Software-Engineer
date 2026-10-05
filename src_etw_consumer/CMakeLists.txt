@@ -30,7 +30,9 @@ target_include_directories(edrsvc PRIVATE src)
 target_link_libraries(edrsvc PRIVATE advapi32 tdh setupapi cfgmgr32)
 
 if (MSVC)
-    target_compile_options(edrsvc PRIVATE /W4 /permissive- /guard:cf)
+    # /WX: cero tolerancia a warnings. Un consumidor que opera a nivel EDR no
+    # puede arrastrar conversiones implícitas ni formatos mal tipados.
+    target_compile_options(edrsvc PRIVATE /W4 /WX /permissive- /guard:cf)
 
     # (1) Pieza build-time de PPL: fuerza validación de firma en el load.
     #     OJO: con /INTEGRITYCHECK el binario NO carga si no está firmado.

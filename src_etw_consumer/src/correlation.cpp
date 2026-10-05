@@ -82,7 +82,8 @@ void correlate(const FaultEvent& ev) {
     DeviceContext ctx = resolveByBdf(ev.bus, ev.dev, ev.func);
 
     wprintf(L"[FAULT] BDF %02x:%02x.%u  IOVA 0x%llx  %s\n",
-            ev.bus, ev.dev, ev.func,
+            static_cast<unsigned>(ev.bus), static_cast<unsigned>(ev.dev),
+            static_cast<unsigned>(ev.func),
             static_cast<unsigned long long>(ev.iova),
             ev.access ? L"W" : L"R");
 
@@ -126,7 +127,8 @@ void enumerateProperties(uint8_t bus, uint8_t dev, uint8_t func) {
         if (!n) break;
         auto* keys = new DEVPROPKEY[n];
         if (SetupDiGetDevicePropertyKeys(h, &d, keys, n, &n, 0)) {
-            wprintf(L"Claves de propiedad del devnode (%u):\n", n);
+            wprintf(L"Claves de propiedad del devnode (%u):\n",
+                    static_cast<unsigned>(n));
             for (DWORD k = 0; k < n; ++k)
                 wprintf(L"  {%08lx-...}  PID %lu\n",
                         keys[k].fmtid.Data1, keys[k].pid);
