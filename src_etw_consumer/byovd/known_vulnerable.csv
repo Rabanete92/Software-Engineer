@@ -1,0 +1,9 @@
+# Catálogo de drivers vulnerables conocidos (BYOVD) — catálogo DEFENSIVO.
+# Formato:  name,sha256,reason      (# = comentario de línea; sha256 opcional)
+# Fuente de referencia: proyecto LOLDrivers + Microsoft Vulnerable Driver Blocklist.
+# Editable sin recompilar: el detector lee este fichero en runtime y lo mezcla
+# con la semilla compilada. Rellena sha256 solo con hashes verificados.
+capcom.sys,,Capcom.sys: ejecucion/mapeo en kernel via IOCTL (clasico BYOVD)
+gdrv.sys,,Gigabyte gdrv.sys: R/W de memoria fisica via IOCTL sin control de acceso
+rtcore64.sys,,MSI RTCore64: R/W de memoria y MSR via IOCTL
+dbutil_2_3.sys,,Dell dbutil_2_3: R/W de memoria fisica via IOCTL

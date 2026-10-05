@@ -21,7 +21,8 @@ dma-edr-research/
 ├── LICENSE
 ├── .gitignore
 ├── docs/
-│   └── Architecture_and_Theory.md     # base de estudio: toda la teoría
+│   ├── Architecture_and_Theory.md     # DMA/EDR: teoría de detección (hardware)
+│   └── Software_Tampering_Detection.md # BYOVD / DKOM / call-stack spoofing (software)
 ├── scripts_windbg/
 │   └── iommu_audit.js                 # auditoría estática VT-d (Root/Context/SLPT)
 ├── src_etw_consumer/
@@ -57,6 +58,17 @@ los dos datos a resolver por build (GUID de provider y clave DEVPKEY de postura 
 ```
 cmake -B build -G "Visual Studio 17 2022" -A x64
 cmake --build build --config Release
+```
+
+### Detección de manipulación por software (nuevo)
+Ampliación hacia vectores puramente por software (Ring 0 / Ring 3). Ver
+`docs/Software_Tampering_Detection.md` para la auditoría de **BYOVD**, **DKOM** y
+**call-stack spoofing** (mecánica conceptual + telemetría/IoCs + hardening).
+Primer módulo en código: `byovd_detector` — puntúa una carga de driver contra el
+catálogo editable `src_etw_consumer/byovd/known_vulnerable.csv` + heurística de ruta.
+
+```
+edrsvc byovd <catalogo.csv|-> <ruta_driver> [kernel]
 ```
 
 ## Estado

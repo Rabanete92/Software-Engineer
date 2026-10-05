@@ -20,6 +20,7 @@ add_executable(edrsvc
     src/main.cpp
     src/etw_consumer.cpp
     src/correlation.cpp
+    src/byovd_detector.cpp
     # elam.rc            # <- descomenta cuando tengas el recurso ELAM (ver README)
 )
 
