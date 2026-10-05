@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <cstdio>
+#include <cstdlib>   // calloc / free
 
 #pragma comment(lib, "tdh.lib")
 #pragma comment(lib, "advapi32.lib")
@@ -43,9 +44,8 @@ namespace {
 
 EtwConsumer::~EtwConsumer() { stop(); }
 
-void WINAPI EtwConsumer::onEventThunk(void* rec) {
-    auto* self = static_cast<EtwConsumer*>(
-        static_cast<PEVENT_RECORD>(rec)->UserContext);
+void WINAPI EtwConsumer::onEventThunk(PEVENT_RECORD rec) {
+    auto* self = static_cast<EtwConsumer*>(rec->UserContext);
     if (self) self->onEvent(rec);
 }
 

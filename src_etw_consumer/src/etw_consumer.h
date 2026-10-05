@@ -1,5 +1,7 @@
 #pragma once
 #include "types.h"
+#include <windows.h>     // WINAPI, TRACEHANDLE
+#include <evntcons.h>    // PEVENT_RECORD / PEVENT_RECORD_CALLBACK
 #include <functional>
 
 // Consumidor ETW en tiempo real. Abre una sesión, habilita el/los providers
@@ -17,7 +19,7 @@ public:
     void stop();
 
 private:
-    static void WINAPI onEventThunk(void* rec);   // trampolín a onEvent
+    static void WINAPI onEventThunk(PEVENT_RECORD rec);   // trampolín a onEvent
     void onEvent(void* rec);
 
     Sink            sink_;
