@@ -34,8 +34,18 @@ jobs:
         working-directory: src_etw_consumer
 
       - name: Build (Release)
-        run: cmake --build build --config Release
         working-directory: src_etw_consumer
+        shell: pwsh
+        run: |
+          cmake --build build --config Release 2>&1 | Tee-Object -FilePath build.log
+          $code = $LASTEXITCODE
+          if ($code -ne 0) {
+            Get-Content build.log |
+              Select-String -Pattern 'error|fatal|LNK|unresolved' |
+              Select-Object -Last 40 |
+              ForEach-Object { Write-Host "::error::$($_.Line.Trim())" }
+          }
+          exit $code
 
       - name: Upload edrsvc.exe
         uses: actions/upload-artifact@v4
