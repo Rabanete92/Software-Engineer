@@ -1,5 +1,7 @@
 # dma-edr-research
 
+[![build](https://github.com/Rabanete92/Software-Engineer/actions/workflows/build.yml/badge.svg)](https://github.com/Rabanete92/Software-Engineer/actions/workflows/build.yml)
+
 Investigación **defensiva (blue team)** sobre detección de ataques DMA por
 hardware y diseño de telemetría EDR en Windows. Reúne la teoría dura (bus PCIe/TLP,
 fingerprinting, IOMMU/VT-d, reporte de faults, el invariante de comportamiento),

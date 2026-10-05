@@ -1,0 +1,38 @@
+name: build
+
+# Compila el consumidor ETW (src_etw_consumer) en Windows/MSVC.
+# Nota: el binario lleva /INTEGRITYCHECK -> enlaza sin problema, pero NO cargará
+# en runtime sin firma AM de Microsoft (ver src_etw_consumer/README.md). El CI
+# solo valida que compila y enlaza; no firma ni ejecuta.
+
+on:
+  push:
+    paths:
+      - 'src_etw_consumer/**'
+      - '.github/workflows/build.yml'
+  pull_request:
+    paths:
+      - 'src_etw_consumer/**'
+      - '.github/workflows/build.yml'
+  workflow_dispatch:
+
+jobs:
+  windows-msvc:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure (CMake, Visual Studio 17 2022, x64)
+        run: cmake -B build -G "Visual Studio 17 2022" -A x64
+        working-directory: src_etw_consumer
+
+      - name: Build (Release)
+        run: cmake --build build --config Release
+        working-directory: src_etw_consumer
+
+      - name: Upload edrsvc.exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: edrsvc-x64-release
+          path: src_etw_consumer/build/Release/edrsvc.exe
+          if-no-files-found: error
