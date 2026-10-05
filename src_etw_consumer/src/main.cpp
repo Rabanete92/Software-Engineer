@@ -112,9 +112,14 @@ static int doStackSelf() {
     wprintf(L"[STACK-SELF] frames=%zu  spoofed=%ls  sev=%ls\n",
             s.frames.size(), v.spoofed ? L"si" : L"no",
             sspoof::severityName(v.severity));
-    for (const sspoof::Finding& f : v.findings)
-        wprintf(L"   - [%ls] frame#%zu: %ls\n",
-                sspoof::checkName(f.check), f.frameIndex, f.detail.c_str());
+    for (const sspoof::Finding& f : v.findings) {
+        if (f.frameIndex == SIZE_MAX)
+            wprintf(L"   - [%ls] (pila): %ls\n",
+                    sspoof::checkName(f.check), f.detail.c_str());
+        else
+            wprintf(L"   - [%ls] frame#%zu: %ls\n",
+                    sspoof::checkName(f.check), f.frameIndex, f.detail.c_str());
+    }
     return 0;
 }
 

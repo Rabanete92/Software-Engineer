@@ -133,9 +133,14 @@ namespace {
         wprintf(L"   [stack] frames_user=%zu  spoofed=%ls  sev=%ls\n",
                 frames.size(), v.spoofed ? L"si" : L"no",
                 sspoof::severityName(v.severity));
-        for (const sspoof::Finding& f : v.findings)
-            wprintf(L"      - [%ls] frame#%zu: %ls\n",
-                    sspoof::checkName(f.check), f.frameIndex, f.detail.c_str());
+        for (const sspoof::Finding& f : v.findings) {
+            if (f.frameIndex == SIZE_MAX)
+                wprintf(L"      - [%ls] (pila): %ls\n",
+                        sspoof::checkName(f.check), f.detail.c_str());
+            else
+                wprintf(L"      - [%ls] frame#%zu: %ls\n",
+                        sspoof::checkName(f.check), f.frameIndex, f.detail.c_str());
+        }
         CloseHandle(hProc);
     }
 }

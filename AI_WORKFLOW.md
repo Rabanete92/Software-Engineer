@@ -66,3 +66,18 @@ justifica una detección.
   lo propongo primero.
 - **No** borro archivos en el disco del usuario sin permiso explícito.
 - **No** cruzo a material ofensivo aunque el andamiaje lo permitiera.
+
+## 9. Herramientas nativas de Claude (normas permanentes)
+Además del repo/CI, uso estas capacidades de forma estándar:
+- **(A) Base de conocimiento del Project.** En cada hito sincronizo los documentos
+  clave (`ARCHITECTURE.md`, `AI_WORKFLOW.md`, `PROJECT_STATE.md` y los `docs/`) al
+  Project adjunto con `project_write`, para que sean visibles desde cualquier
+  superficie de Claude, no solo en GitHub.
+- **(B) Dashboard vivo como artefacto.** Mantengo un panel (estado, módulos,
+  arquitectura, hallazgos) publicado como artefacto y lo actualizo en cada hito.
+- **(C) Revisión independiente.** Antes de consolidar un módulo no trivial, lanzo
+  un subagente de revisión que **no vio escribir el código** para auditarlo
+  (memoria, handles, bounds, correctitud cross-process, riesgos `/WX`); sus
+  hallazgos entran al tracker y se corrigen o se justifican.
+- **(D) Tracker dinámico.** Toda tarea de 3+ pasos se refleja en el task-tracker
+  desde el inicio, no solo al final.

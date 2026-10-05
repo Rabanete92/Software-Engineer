@@ -32,6 +32,11 @@ _Última actualización: 2026-10-05._
 - ✅ CI Windows/MSVC `/W4 /WX` + `ctest` (GitHub Actions).
 - ✅ Doc pedagógica (`docs/Concepts_101.md`) + onboarding en README.
 - ✅ `AI_WORKFLOW.md`, `ARCHITECTURE.md`, este tracker.
+- ✅ Revisión de seguridad del C++ (inline; el subagente independiente quedó
+  bloqueado por el safeguard cyber de la plataforma). Sin bugs de memoria de alta
+  severidad; 3 findings de robustez corregidos: (1) call-preceded no "acusa"
+  cuando el código previo es ilegible (evita falso positivo), (2) el CSV conserva
+  comas en `reason`, (3) etiqueta `(pila)` para findings de ámbito global.
 - ✅ Hook pre-commit (gate local de lógica pura con g++) + instalador.
 - 🧊 Entorno de validación cross-process para el stack env (fase posterior).
 

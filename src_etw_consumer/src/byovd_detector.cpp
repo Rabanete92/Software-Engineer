@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <filesystem>
 
 namespace byovd {
 namespace {
@@ -72,7 +73,9 @@ Detector::Detector() {
 }
 
 size_t Detector::loadCatalog(const std::wstring& csvPath) {
-    std::ifstream f(csvPath.c_str());   // ctor wide: extensión MSVC
+    // [review] std::filesystem::path acepta rutas wide y es estandar (C++17),
+    // en vez del ctor de ifstream(const wchar_t*) que es extension solo-MSVC.
+    std::ifstream f(std::filesystem::path{csvPath});
     if (!f) return 0;
     size_t added = 0;
     std::string line;
@@ -81,15 +84,19 @@ size_t Detector::loadCatalog(const std::wstring& csvPath) {
         const size_t p = line.find_first_not_of(" \t");
         if (p == std::string::npos || line[p] == '#') continue;   // vacía / comentario
 
-        std::string cols[3];
+        // [review] Parseo: name,sha256,reason. 'reason' es el RESTO de la linea,
+        // asi que puede contener comas sin truncarse.
         std::stringstream ss(line);
-        for (int i = 0; i < 3 && std::getline(ss, cols[i], ','); ++i) { /* split */ }
-        if (cols[0].empty()) continue;
+        std::string name, sha, reason;
+        std::getline(ss, name, ',');
+        std::getline(ss, sha, ',');
+        std::getline(ss, reason);
+        if (name.empty()) continue;
 
         VulnEntry e;
-        e.name   = lowerAscii(cols[0]);
-        e.sha256 = lowerAscii(cols[1]);
-        e.reason = cols[2];
+        e.name   = lowerAscii(name);
+        e.sha256 = lowerAscii(sha);
+        e.reason = reason;
         entries_.push_back(e);
         ++added;
     }

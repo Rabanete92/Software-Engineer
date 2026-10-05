@@ -79,7 +79,10 @@ bool Win32StackEnv::isCallPreceded(uint64_t returnAddr) const {
     if (!ReadProcessMemory(hProcess_,
                            reinterpret_cast<LPCVOID>(static_cast<uintptr_t>(start)),
                            buf, sizeof(buf), &got) || got != sizeof(buf))
-        return false;   // ilegible -> no podemos confirmar call-preceded
+        return true;    // [review] ilegible -> no podemos confirmar; NO acusamos.
+                        // Un frame realmente forjado en memoria no respaldada ya
+                        // lo marca ReturnInModule; aqui evitamos el falso positivo
+                        // cuando el codigo previo cruza una pagina no legible.
 
     // buf[15] = byte en returnAddr-1.
     // (a) call rel32: E8 cc cc cc cc  (opcode en returnAddr-5 = buf[11]).
