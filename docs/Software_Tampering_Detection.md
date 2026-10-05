@@ -131,10 +131,16 @@ Orden por tractabilidad desde el consumidor Ring-3 actual:
    Event Id 5), extrae ruta + PID por TDH, infiere modo kernel (`.sys` / System
    PID 4) y evalúa. Provider/keyword/Event Id y el nombre de la propiedad de ruta
    son *defaults* confirmables en la build.
-2. **Call-stack spoofing.** La sesión de `imgwatch` ya instrumenta
-   `EVENT_ENABLE_PROPERTY_STACK_TRACE` y cuenta los frames adjuntos a cada evento
-   (puente listo). Falta el validador de frames: return address en módulo
-   respaldado por disco + unwind info (`.pdata`) + límites de pila del TEB.
+2. **Call-stack spoofing.** La sesión de `imgwatch` instrumenta
+   `EVENT_ENABLE_PROPERTY_STACK_TRACE` y cuenta los frames adjuntos. La **lógica
+   de validación está implementada** en `stack_spoof_detector` (las 5
+   comprobaciones: ReturnInModule, UnwindCoherent, TebBounds, CallPreceded,
+   Termination), con lógica pura inyectable (`IStackEnv`) y **tests unitarios**
+   con frames sintéticos ejecutados en CI (CTest). Falta el entorno en vivo
+   (Win32): resolver cada frame con `VirtualQuery` (MEM_IMAGE vs privada),
+   `RtlLookupFunctionEntry` (`.pdata`), rango de los thunks de arranque y lectura
+   del byte previo para el call-preceded; y alimentar el detector con las pilas
+   capturadas por ETW.
 3. **DKOM.** Requiere los callbacks de kernel para una fuente de verdad robusta;
    va cuando añadamos el componente de kernel.
 

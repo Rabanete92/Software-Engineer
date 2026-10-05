@@ -72,6 +72,11 @@ edrsvc imgwatch [catalogo.csv]                   # watch de image-load en vivo -
 edrsvc byovd <catalogo.csv|-> <ruta_driver> [kernel]   # evaluación puntual de una ruta
 ```
 
+Módulo `stack_spoof_detector`: valida pilas de llamadas con 5 comprobaciones
+(return respaldado por imagen, coherencia de unwind, límites del TEB,
+call-preceded y terminación en el thunk de arranque). Lógica pura con tests
+unitarios ejecutados en CI (CTest).
+
 ## Estado
 
 Prueba de concepto académica. Corre en VTL0: es una capa de auditoría/telemetría,

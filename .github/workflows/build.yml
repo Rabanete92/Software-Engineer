@@ -47,6 +47,10 @@ jobs:
           }
           exit $code
 
+      - name: Test (ctest)
+        working-directory: src_etw_consumer
+        run: ctest --test-dir build -C Release --output-on-failure
+
       - name: Upload edrsvc.exe
         uses: actions/upload-artifact@v4
         with:

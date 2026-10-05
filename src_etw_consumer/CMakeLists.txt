@@ -22,6 +22,7 @@ add_executable(edrsvc
     src/correlation.cpp
     src/byovd_detector.cpp
     src/image_load_consumer.cpp
+    src/stack_spoof_detector.cpp
     # elam.rc            # <- descomenta cuando tengas el recurso ELAM (ver README)
 )
 
@@ -50,3 +51,18 @@ if (MSVC)
     #             "$<TARGET_FILE:edrsvc>"
     #     COMMENT "Firmando con certificado anti-malware (PPL)")
 endif()
+
+#-------------------------------------------------------------------------------
+# Tests unitarios (lógica pura; no requieren Windows vivo). El detector de
+# call-stack se valida con frames sintéticos vía CTest.
+#-------------------------------------------------------------------------------
+enable_testing()
+add_executable(stack_spoof_tests
+    test/stack_spoof_tests.cpp
+    src/stack_spoof_detector.cpp
+)
+target_include_directories(stack_spoof_tests PRIVATE src)
+if (MSVC)
+    target_compile_options(stack_spoof_tests PRIVATE /W4 /WX /permissive-)
+endif()
+add_test(NAME stack_spoof COMMAND stack_spoof_tests)
