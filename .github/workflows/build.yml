@@ -22,8 +22,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure (CMake, Visual Studio 17 2022, x64)
-        run: cmake -B build -G "Visual Studio 17 2022" -A x64
+      - name: Toolchain info
+        run: cmake --version
+        working-directory: src_etw_consumer
+
+      # Dejar que CMake elija el generador de Visual Studio instalado en el
+      # runner (en vez de fijar "Visual Studio 17 2022") para sobrevivir a
+      # cambios de imagen. -A x64 es válido con el generador VS por defecto.
+      - name: Configure (CMake, VS por defecto, x64)
+        run: cmake -B build -A x64
         working-directory: src_etw_consumer
 
       - name: Build (Release)
