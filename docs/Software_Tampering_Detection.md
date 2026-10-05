@@ -126,12 +126,15 @@ Orden por tractabilidad desde el consumidor Ring-3 actual:
    propio; reutiliza el extractor *schema-driven* del consumidor ETW. Módulo
    `byovd_detector` (ver `src_etw_consumer/src/byovd_detector.*`): puntúa una
    carga de imagen contra el catálogo `byovd/known_vulnerable.csv` + heurística
-   de ruta. Siguiente paso: cablearlo a los eventos de image-load vivos
-   (confirmar provider/keyword y propiedad de ruta en la build, como se hizo con
-   el fault de DMA).
-2. **Call-stack spoofing.** Puente natural: activar `STACK_TRACE` en la misma
-   sesión ETW y validar frames (módulos + unwind + TEB). No necesita driver para
-   empezar.
+   de ruta. **Cableado a image-load en vivo** vía `ImageLoadConsumer` (modo
+   `edrsvc imgwatch`): suscribe Microsoft-Windows-Kernel-Process (keyword IMAGE,
+   Event Id 5), extrae ruta + PID por TDH, infiere modo kernel (`.sys` / System
+   PID 4) y evalúa. Provider/keyword/Event Id y el nombre de la propiedad de ruta
+   son *defaults* confirmables en la build.
+2. **Call-stack spoofing.** La sesión de `imgwatch` ya instrumenta
+   `EVENT_ENABLE_PROPERTY_STACK_TRACE` y cuenta los frames adjuntos a cada evento
+   (puente listo). Falta el validador de frames: return address en módulo
+   respaldado por disco + unwind info (`.pdata`) + límites de pila del TEB.
 3. **DKOM.** Requiere los callbacks de kernel para una fuente de verdad robusta;
    va cuando añadamos el componente de kernel.
 

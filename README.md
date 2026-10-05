@@ -68,7 +68,8 @@ Primer módulo en código: `byovd_detector` — puntúa una carga de driver cont
 catálogo editable `src_etw_consumer/byovd/known_vulnerable.csv` + heurística de ruta.
 
 ```
-edrsvc byovd <catalogo.csv|-> <ruta_driver> [kernel]
+edrsvc imgwatch [catalogo.csv]                   # watch de image-load en vivo -> BYOVD
+edrsvc byovd <catalogo.csv|-> <ruta_driver> [kernel]   # evaluación puntual de una ruta
 ```
 
 ## Estado
