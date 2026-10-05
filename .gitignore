@@ -8,6 +8,7 @@
 *.sys
 *.lib
 *.exp
+*.bak
 # IDE
 .vs/
 *.user

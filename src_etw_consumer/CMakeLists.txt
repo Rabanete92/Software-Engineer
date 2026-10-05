@@ -23,6 +23,7 @@ add_executable(edrsvc
     src/byovd_detector.cpp
     src/image_load_consumer.cpp
     src/stack_spoof_detector.cpp
+    src/win32_stack_env.cpp
     # elam.rc            # <- descomenta cuando tengas el recurso ELAM (ver README)
 )
 

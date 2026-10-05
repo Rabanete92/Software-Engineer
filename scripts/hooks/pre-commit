@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Gate local rápido (portable). Compila y ejecuta los TESTS DE LÓGICA PURA con
+# g++ — son independientes del SO, así que validan regresiones de lógica antes de
+# llegar al CI. El build Windows/MSVC bajo /WX es responsabilidad del CI (aquí no
+# hay toolchain Windows). Ver AI_WORKFLOW.md §3.
+set -u
+
+root="$(git rev-parse --show-toplevel)"
+sd="$root/src_etw_consumer"
+
+# 1) Higiene: no permitir artefactos en el stage.
+if git diff --cached --name-only | grep -Eiq '\.(bak|obj|pdb|exe|ilk|lib|exp)$'; then
+    echo "pre-commit: hay artefactos (.bak/.obj/.exe/...) en el stage; quítalos." >&2
+    exit 1
+fi
+
+# 2) Gate de lógica pura.
+if command -v g++ >/dev/null 2>&1; then
+    tmp="$(mktemp -d)"
+    if g++ -std=c++20 -Wall -Wextra -I"$sd/src" \
+           "$sd/src/stack_spoof_detector.cpp" \
+           "$sd/test/stack_spoof_tests.cpp" \
+           -o "$tmp/sstests" 2>"$tmp/err"; then
+        if "$tmp/sstests" >/dev/null; then
+            echo "pre-commit: tests de lógica pura OK"
+        else
+            echo "pre-commit: FALLAN los tests de lógica pura." >&2
+            rm -rf "$tmp"; exit 1
+        fi
+    else
+        echo "pre-commit: error de compilación (lógica pura):" >&2
+        cat "$tmp/err" >&2
+        rm -rf "$tmp"; exit 1
+    fi
+    rm -rf "$tmp"
+else
+    echo "pre-commit: g++ no disponible; se omite el gate local (el CI valida en Windows/WX)."
+fi
+
+exit 0

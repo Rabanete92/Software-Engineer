@@ -35,8 +35,8 @@ FrameFacts good(bool thunk = false) {
 
 int g_fail = 0;
 void expect(bool cond, const wchar_t* name) {
-    if (cond) { wprintf(L"[ok]   %s\n", name); }
-    else      { wprintf(L"[FAIL] %s\n", name); ++g_fail; }
+    if (cond) { wprintf(L"[ok]   %ls\n", name); }
+    else      { wprintf(L"[FAIL] %ls\n", name); ++g_fail; }
 }
 
 bool has(const StackVerdict& v, Check c) {
@@ -98,6 +98,6 @@ int main() {
         expect(has(v, Check::Termination), L"terminacion mala -> Termination");
     }
 
-    wprintf(L"\n%s (%d fallos)\n", (g_fail == 0) ? L"TODOS OK" : L"HAY FALLOS", g_fail);
+    wprintf(L"\n%ls (%d fallos)\n", (g_fail == 0) ? L"TODOS OK" : L"HAY FALLOS", g_fail);
     return (g_fail == 0) ? 0 : 1;
 }

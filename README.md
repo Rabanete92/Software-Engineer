@@ -116,7 +116,8 @@ edrsvc byovd <catalogo.csv|-> <ruta_driver> [kernel]   # evaluación puntual de 
 Módulo `stack_spoof_detector`: valida pilas de llamadas con 5 comprobaciones
 (return respaldado por imagen, coherencia de unwind, límites del TEB,
 call-preceded y terminación en el thunk de arranque). Lógica pura con tests
-unitarios ejecutados en CI (CTest).
+unitarios ejecutados en CI (CTest). Su entorno en vivo es `Win32StackEnv`
+(self-test: `edrsvc stackself`).
 
 ## Estado
 

@@ -2,6 +2,8 @@
 #include "correlation.h"
 #include "byovd_detector.h"
 #include "image_load_consumer.h"
+#include "stack_spoof_detector.h"
+#include "win32_stack_env.h"
 
 #include <windows.h>
 #include <cstdio>
@@ -15,6 +17,7 @@
 //   edrsvc install                   -> instala el servicio y lo marca PPL-AM
 //   edrsvc byovd <csv|-> <ruta> [kernel] -> audita una carga de driver (BYOVD)
 //   edrsvc imgwatch [csv]            -> watch de image-load en vivo -> BYOVD
+//   edrsvc stackself                 -> self-test del validador de pila (vivo)
 //   edrsvc enumprops <bus> <d> <f>   -> vuelca claves de propiedad del devnode
 
 static EtwConsumer*       g_consumer = nullptr;
@@ -99,11 +102,28 @@ static int doImgwatch(int argc, wchar_t** argv) {
     return 0;
 }
 
+static int doStackSelf() {
+    // Demo/self-test: valida la pila del propio hilo con el entorno Win32 real.
+    // En un proceso sano esperamos pocos o ningun hallazgo (depende de la ventana
+    // del thunk y del frame superior de captura).
+    sspoof::Win32StackEnv env;
+    const sspoof::ThreadStack s = sspoof::Win32StackEnv::captureCurrent();
+    const sspoof::StackVerdict v = sspoof::Detector(env).analyze(s);
+    wprintf(L"[STACK-SELF] frames=%zu  spoofed=%ls  sev=%ls\n",
+            s.frames.size(), v.spoofed ? L"si" : L"no",
+            sspoof::severityName(v.severity));
+    for (const sspoof::Finding& f : v.findings)
+        wprintf(L"   - [%ls] frame#%zu: %ls\n",
+                sspoof::checkName(f.check), f.frameIndex, f.detail.c_str());
+    return 0;
+}
+
 int wmain(int argc, wchar_t** argv) {
-    if (argc >= 2 && _wcsicmp(argv[1], L"run") == 0)      return doRun();
-    if (argc >= 2 && _wcsicmp(argv[1], L"install") == 0)  return doInstall();
-    if (argc >= 2 && _wcsicmp(argv[1], L"imgwatch") == 0) return doImgwatch(argc, argv);
-    if (argc >= 4 && _wcsicmp(argv[1], L"byovd") == 0)    return doByovd(argc, argv);
+    if (argc >= 2 && _wcsicmp(argv[1], L"run") == 0)       return doRun();
+    if (argc >= 2 && _wcsicmp(argv[1], L"install") == 0)   return doInstall();
+    if (argc >= 2 && _wcsicmp(argv[1], L"imgwatch") == 0)  return doImgwatch(argc, argv);
+    if (argc >= 2 && _wcsicmp(argv[1], L"stackself") == 0) return doStackSelf();
+    if (argc >= 4 && _wcsicmp(argv[1], L"byovd") == 0)     return doByovd(argc, argv);
     if (argc >= 5 && _wcsicmp(argv[1], L"enumprops") == 0) {
         correlation::enumerateProperties(
             (uint8_t)wcstoul(argv[2], nullptr, 16),
@@ -111,7 +131,7 @@ int wmain(int argc, wchar_t** argv) {
             (uint8_t)wcstoul(argv[4], nullptr, 16));
         return 0;
     }
-    wprintf(L"Uso: edrsvc [run | install | imgwatch [csv] | "
+    wprintf(L"Uso: edrsvc [run | install | imgwatch [csv] | stackself | "
             L"byovd <csv|-> <ruta> [kernel] | enumprops <bus> <dev> <func>]\n");
     return 0;
 }
