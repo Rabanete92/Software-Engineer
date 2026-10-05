@@ -29,7 +29,7 @@ public:
 FrameFacts good(bool thunk = false) {
     FrameFacts f;
     f.inModule = true; f.imageBacked = true; f.executable = true;
-    f.hasUnwindInfo = true; f.isThreadStartThunk = thunk;
+    f.hasUnwindInfo = true; f.unwindChecked = true; f.isThreadStartThunk = thunk;
     return f;
 }
 

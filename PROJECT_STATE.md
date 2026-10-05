@@ -22,7 +22,10 @@ _Última actualización: 2026-10-05._
 - ✅ `Win32StackEnv` — `IStackEnv` en vivo para el proceso actual
   (VirtualQueryEx / RtlLookupFunctionEntry / thunks / call-preceded) + modo
   `stackself`. [XPROC] cross-process pendiente.
-- 🧊 Cablear pilas ETW -> `ThreadStack` -> `Detector` en `imgwatch`.
+- 🧊 Cablear pilas ETW -> `ThreadStack` -> `Detector` en `imgwatch`.  →  ✅
+  (`imgwatch` extrae los frames user-mode de la pila ETW y, en una alerta BYOVD,
+  los valida cross-process con `Win32StackEnv` + `Detector`; unwind auto-gateado
+  y TebBounds omitido por falta de TEB del hilo — honesto).
 - 🧊 DKOM: requiere componente de kernel (callbacks) — fase posterior.
 
 ## DevEx / infraestructura

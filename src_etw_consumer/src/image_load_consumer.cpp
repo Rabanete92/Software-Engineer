@@ -1,8 +1,11 @@
 #include "image_load_consumer.h"
+#include "stack_spoof_detector.h"
+#include "win32_stack_env.h"
 
 #include <evntrace.h>
 #include <tdh.h>
 #include <string>
+#include <vector>
 #include <cstdio>
 #include <cstdlib>
 #include <climits>
@@ -88,6 +91,53 @@ namespace {
         }
         return 0;
     }
+
+    // Extrae las direcciones de retorno USER-MODE de la pila adjunta (x64). Se
+    // descartan las direcciones de kernel (rango canonico alto): el validador de
+    // spoofing razona sobre modulos de usuario y los frames de kernel darian
+    // falsos "no respaldado". Orden: interior -> exterior, como espera el Detector.
+    std::vector<uint64_t> extractUserFrames(PEVENT_RECORD rec) {
+        std::vector<uint64_t> out;
+        for (USHORT i = 0; i < rec->ExtendedDataCount; ++i) {
+            const auto& ext = rec->ExtendedData[i];
+            if (ext.ExtType != EVENT_HEADER_EXT_TYPE_STACK_TRACE64) continue;
+            if (ext.DataSize <= sizeof(ULONG64)) continue;
+            const auto* st = reinterpret_cast<const EVENT_EXTENDED_ITEM_STACK_TRACE64*>(
+                static_cast<uintptr_t>(ext.DataPtr));
+            const size_t count = (ext.DataSize - sizeof(ULONG64)) / sizeof(ULONG64);
+            for (size_t k = 0; k < count; ++k) {
+                const uint64_t a = static_cast<uint64_t>(st->Address[k]);
+                if (a != 0 && a < 0x0000800000000000ULL)   // solo user-mode (x64)
+                    out.push_back(a);
+            }
+        }
+        return out;
+    }
+
+    // Enriquecimiento: valida la postura de la pila capturada contra el proceso
+    // originante. TebBounds queda sin evaluar (el evento no trae el TEB del hilo);
+    // el unwind se auto-desactiva cross-process (ver Win32StackEnv). Correctas
+    // cross-process: ReturnInModule, CallPreceded y Termination.
+    void analyzeStack(ULONG pid, const std::vector<uint64_t>& frames) {
+        HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+        if (!hProc) {
+            wprintf(L"   [stack] no se pudo abrir pid=%lu para analizar la pila (err=%lu)\n",
+                    static_cast<unsigned long>(pid),
+                    static_cast<unsigned long>(GetLastError()));
+            return;
+        }
+        sspoof::Win32StackEnv env(hProc);
+        sspoof::ThreadStack s;
+        s.frames = frames;   // base/limit/rsp = 0 -> TebBounds no evaluado
+        const sspoof::StackVerdict v = sspoof::Detector(env).analyze(s);
+        wprintf(L"   [stack] frames_user=%zu  spoofed=%ls  sev=%ls\n",
+                frames.size(), v.spoofed ? L"si" : L"no",
+                sspoof::severityName(v.severity));
+        for (const sspoof::Finding& f : v.findings)
+            wprintf(L"      - [%ls] frame#%zu: %ls\n",
+                    sspoof::checkName(f.check), f.frameIndex, f.detail.c_str());
+        CloseHandle(hProc);
+    }
 }
 
 ImageLoadConsumer::~ImageLoadConsumer() { stop(); }
@@ -120,6 +170,10 @@ void ImageLoadConsumer::onEvent(PEVENT_RECORD rec) {
             img.kernelMode ? L" kernel" : L"",
             byovd::severityName(v.severity), static_cast<unsigned>(frames));
     for (const std::wstring& r : v.reasons) wprintf(L"   - %s\n", r.c_str());
+
+    // Enriquecer la alerta con la postura de la pila capturada por ETW.
+    const std::vector<uint64_t> uframes = extractUserFrames(rec);
+    if (!uframes.empty()) analyzeStack(pid, uframes);
 }
 
 bool ImageLoadConsumer::start() {

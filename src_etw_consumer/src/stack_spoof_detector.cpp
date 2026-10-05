@@ -65,13 +65,15 @@ StackVerdict Detector::analyze(const ThreadStack& s) const {
             add(Check::ReturnInModule, i, Severity::High,
                 L"return address no respaldada por imagen en disco / no ejecutable");
 
-        // (2) Coherencia de unwind (solo tiene sentido si cae en un modulo).
+        // (2) Coherencia de unwind (solo tiene sentido si cae en un modulo Y el
+        //     entorno pudo evaluar el unwind; cross-process no puede, y gatearlo
+        //     evita marcar como spoof cada frame legitimo de otro proceso).
         //     POR QUE: toda funcion real que un compilador genera queda
         //     registrada en los datos de unwind del modulo (.pdata). Un retorno
         //     dentro de un modulo pero SIN entrada de unwind apunta a un offset
         //     que ninguna funcion legitima ocupa: tipico de gadgets/ROP o de un
         //     frame falso incrustado para imitar a ese modulo.
-        if (f.inModule && !f.hasUnwindInfo)
+        if (f.unwindChecked && f.inModule && !f.hasUnwindInfo)
             add(Check::UnwindCoherent, i, Severity::High,
                 L"return address sin RUNTIME_FUNCTION (.pdata) correspondiente");
 

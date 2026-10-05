@@ -40,23 +40,23 @@ FrameFacts Win32StackEnv::classify(uint64_t returnAddr) const {
     if (VirtualQueryEx(hProcess_,
                        reinterpret_cast<LPCVOID>(static_cast<uintptr_t>(returnAddr)),
                        &mbi, sizeof(mbi)) == sizeof(mbi)) {
-        const bool  commit = (mbi.State == MEM_COMMIT);
-        const DWORD prot   = mbi.Protect & 0xFFu;
+        const bool  commit   = (mbi.State == MEM_COMMIT);
+        const DWORD prot     = mbi.Protect & 0xFFu;
         const DWORD execBits = PAGE_EXECUTE | PAGE_EXECUTE_READ |
                                PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY;
+        // MEM_IMAGE = la region esta respaldada por un modulo mapeado desde disco.
+        // Es el criterio correcto tambien cross-process (VirtualQueryEx consulta el
+        // proceso objetivo). No usamos GetModuleHandleEx porque solo veria los
+        // modulos del proceso ACTUAL, no los del objetivo.
+        f.imageBacked = (mbi.Type == MEM_IMAGE);
+        f.inModule    = f.imageBacked;
         f.executable  = commit && ((prot & execBits) != 0);
-        f.imageBacked = (mbi.Type == MEM_IMAGE);   // respaldado por archivo en disco
     }
 
-    HMODULE hm = nullptr;
-    if (GetModuleHandleExW(
-            GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-            reinterpret_cast<LPCWSTR>(static_cast<uintptr_t>(returnAddr)), &hm) && hm) {
-        f.inModule = true;
-    }
-
-    // [XPROC] RtlLookupFunctionEntry solo es valido para el proceso actual.
+    // [XPROC] RtlLookupFunctionEntry solo es valido para el proceso actual; en
+    // cross-process dejamos unwindChecked=false y la comprobacion (2) se omite.
     if (isCurrentProcess_) {
+        f.unwindChecked = true;
         DWORD64 imageBase = 0;
         if (RtlLookupFunctionEntry(static_cast<DWORD64>(returnAddr), &imageBase, nullptr) != nullptr)
             f.hasUnwindInfo = true;

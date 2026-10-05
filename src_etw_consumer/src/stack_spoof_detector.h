@@ -22,6 +22,11 @@ struct FrameFacts {
     bool imageBacked        = false; // respaldado por imagen en disco (MEM_IMAGE)
     bool executable         = false; // región ejecutable
     bool hasUnwindInfo      = false; // RUNTIME_FUNCTION presente (.pdata)
+    bool unwindChecked      = false; // ¿el entorno pudo evaluar el unwind? Si es
+                                     // false (p.ej. cross-process, donde
+                                     // RtlLookupFunctionEntry no aplica), la
+                                     // comprobación (2) se omite en vez de dar un
+                                     // falso positivo.
     bool isThreadStartThunk = false; // RtlUserThreadStart / BaseThreadInitThunk
 };
 
