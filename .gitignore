@@ -1,0 +1,15 @@
+# Build
+/build/*
+!/build/.gitkeep
+*.obj
+*.pdb
+*.ilk
+*.exe
+*.sys
+*.lib
+*.exp
+# IDE
+.vs/
+*.user
+CMakeCache.txt
+CMakeFiles/
