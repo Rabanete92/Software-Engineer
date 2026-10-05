@@ -13,6 +13,46 @@ con correlación de postura DMA.
 > derivar firmas e invariantes de detección, no para ejecutarlos. No contiene
 > exploits, primitivas armadas ni bypasses operativos.
 
+## Rampa de entrada (onboarding)
+
+**¿Nuevo en el proyecto?** Empieza por [`docs/Concepts_101.md`](docs/Concepts_101.md):
+explica con analogías (sin bajo nivel ni código) qué es BYOVD y qué es el
+call-stack spoofing, que es lo que defendemos.
+
+**¿Qué es esto?** Investigación **defensiva (blue team)** que construye piezas de
+un EDR para Windows: telemetría y heurísticas que **detectan** manipulación del
+sistema —por hardware (ataques DMA) y por software (BYOVD, DKOM, spoofing de
+pila)—. Observa y clasifica; no ataca.
+
+**Mapa en 30 segundos:**
+- `docs/` — la teoría y la pedagogía (empieza por `Concepts_101.md`).
+- `scripts_windbg/iommu_audit.js` — auditoría estática del IOMMU (rama hardware).
+- `src_etw_consumer/` — el servicio C++ (rama software): consumidores ETW y los
+  detectores (`byovd_detector`, `stack_spoof_detector`).
+
+**Arquitectura limpia (lo que hay que entender antes de tocar código):** la
+*lógica* de detección está **separada del sistema operativo**. Por ejemplo,
+`stack_spoof_detector` no llama a ninguna API de Windows: recibe los hechos de
+cada frame a través de una interfaz, `IStackEnv` (inyección de dependencias). En
+producción esa interfaz la implementará un entorno Win32 real; en los tests la
+implementa un `FakeEnv` con datos sintéticos. Ventaja: la lógica se prueba de
+forma determinista **sin necesidad de una máquina Windows viva**, y el motor no
+se contamina con detalles del SO.
+
+**Compilar y correr los tests** (requiere CMake y un toolchain MSVC; en Windows):
+
+```
+cd src_etw_consumer
+cmake -B build -A x64
+cmake --build build --config Release
+ctest --test-dir build -C Release --output-on-failure
+```
+
+Los tests unitarios (`test/stack_spoof_tests.cpp`) no necesitan privilegios ni
+hardware: validan la lógica del detector con frames sintéticos. El CI
+(GitHub Actions, `.github/workflows/build.yml`) hace exactamente estos pasos en
+cada push bajo `/W4 /WX` (cero warnings tolerados).
+
 ## Estructura
 
 ```
@@ -21,6 +61,7 @@ dma-edr-research/
 ├── LICENSE
 ├── .gitignore
 ├── docs/
+│   ├── Concepts_101.md                # pedagógico, sin bajo nivel (empieza aquí)
 │   ├── Architecture_and_Theory.md     # DMA/EDR: teoría de detección (hardware)
 │   └── Software_Tampering_Detection.md # BYOVD / DKOM / call-stack spoofing (software)
 ├── scripts_windbg/

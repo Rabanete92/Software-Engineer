@@ -25,6 +25,13 @@ struct FrameFacts {
     bool isThreadStartThunk = false; // RtlUserThreadStart / BaseThreadInitThunk
 };
 
+// IStackEnv — frontera con el SO (inyección de dependencias).
+// POR QUE existe: resolver estos hechos en vivo requiere APIs de Windows
+// (VirtualQuery, RtlLookupFunctionEntry, lectura de memoria). Si el detector las
+// llamara directamente, su lógica solo podría probarse en una máquina Windows y
+// con un proceso real sospechoso a mano. Al abstraer el "entorno" detrás de esta
+// interfaz, los tests inyectan un entorno sintético (frames a mano) y validan las
+// 5 comprobaciones de forma determinista, sin SO vivo. El motor queda limpio.
 class IStackEnv {
 public:
     virtual ~IStackEnv() = default;

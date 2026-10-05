@@ -39,6 +39,11 @@ StackVerdict Detector::analyze(const ThreadStack& s) const {
     };
 
     // (3) TEB bounds: RSP dentro de [StackLimit, StackBase).
+    //     POR QUE: cada hilo tiene una pila real asignada por el SO, cuyos
+    //     limites viven en el TEB. Los atacantes suelen FORJAR una pila falsa en
+    //     memoria cualquiera (heap, region privada reservada aparte) y apuntar
+    //     ahi; si el RSP no cae dentro del rango legitimo del hilo, esa "pila"
+    //     es sintetica, no la que el SO le dio.
     if (s.rsp != 0 && s.stackBase != 0) {
         if (s.rsp < s.stackLimit || s.rsp >= s.stackBase)
             add(Check::TebBounds, SIZE_MAX, Severity::High,
@@ -52,22 +57,39 @@ StackVerdict Detector::analyze(const ThreadStack& s) const {
         const bool outermost = (i + 1 == n);
 
         // (1) Return address respaldada por imagen en disco y ejecutable.
+        //     POR QUE: el codigo inyectado (shellcode, modulos "manual-mapped")
+        //     vive en memoria privada/RWX sin un archivo en disco detras. Un
+        //     retorno que apunta a esa memoria delata codigo que no proviene de
+        //     ningun binario cargado legitimamente = implante en memoria.
         if (!(f.inModule && f.imageBacked && f.executable))
             add(Check::ReturnInModule, i, Severity::High,
                 L"return address no respaldada por imagen en disco / no ejecutable");
 
         // (2) Coherencia de unwind (solo tiene sentido si cae en un modulo).
+        //     POR QUE: toda funcion real que un compilador genera queda
+        //     registrada en los datos de unwind del modulo (.pdata). Un retorno
+        //     dentro de un modulo pero SIN entrada de unwind apunta a un offset
+        //     que ninguna funcion legitima ocupa: tipico de gadgets/ROP o de un
+        //     frame falso incrustado para imitar a ese modulo.
         if (f.inModule && !f.hasUnwindInfo)
             add(Check::UnwindCoherent, i, Severity::High,
                 L"return address sin RUNTIME_FUNCTION (.pdata) correspondiente");
 
         // (4) Call-preceded (excepto el frame de terminacion, que es un entry).
+        //     POR QUE: una direccion de retorno legitima SIEMPRE la dejo en la
+        //     pila la instruccion `call` que esta justo antes de ella. Si el byte
+        //     previo no es un call, esa direccion no la puso ninguna llamada
+        //     real: la escribio el atacante "a mano" para rellenar la pila falsa.
         if (!outermost && !env_.isCallPreceded(a))
             add(Check::CallPreceded, i, Severity::High,
                 L"el byte previo al retorno no corresponde a una instruccion call");
     }
 
     // (5) Terminacion en el thunk de arranque del hilo.
+    //     POR QUE: toda pila real nace donde el SO arranco el hilo
+    //     (RtlUserThreadStart -> BaseThreadInitThunk). Un atacante que recorta o
+    //     fabrica la cadena para ocultar su verdadero origen rara vez reproduce
+    //     ese fondo: una pila que no termina ahi esta truncada o inventada.
     if (n > 0) {
         const FrameFacts last = env_.classify(s.frames[n - 1]);
         if (!last.isThreadStartThunk)
